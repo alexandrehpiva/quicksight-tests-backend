@@ -1,10 +1,14 @@
 {
-    "python.linting.flake8Enabled": true,
     "python.linting.enabled": true,
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
     "python.testing.pytestPath": "pytest",
     "python.testing.pytestArgs": [
         "-vv", "tests", "-c", "pytest.ini"
+    ],
+    "cSpell.words": [
+        "botocore",
+        "gethostname",
+        "starlette"
     ]
 }
