@@ -1,4 +1,8 @@
 import boto3
+import json
+import time
+
+from botocore.exceptions import ClientError
 
 from src.core import settings
 
@@ -17,285 +21,50 @@ def get_quicksight_client():
         )
     return boto3.client('quicksight', region_name=settings.AWS_DEFAULT_REGION)
 
-# list_dashboards(**kwargs)
-#
-#     Lists dashboards in an Amazon Web Services account.
-#
-#     See also: AWS API Documentation
-#
-#     Request Syntax
-#
-#     response = client.list_dashboards(
-#         AwsAccountId='string',
-#         NextToken='string',
-#         MaxResults=123
-#     )
-#
-#     Parameters
-#
-#             AwsAccountId (string) --
-#
-#             [REQUIRED]
-#
-#             The ID of the Amazon Web Services account that contains the dashboards that you're listing.
-#             NextToken (string) -- The token for the next set of results, or null if there are no more results.
-#             MaxResults (integer) -- The maximum number of results to be returned per request.
-#
-#     Return type
-#
-#         dict
-#     Returns
-#
-#         Response Syntax
-#
-#         {
-#             'DashboardSummaryList': [
-#                 {
-#                     'Arn': 'string',
-#                     'DashboardId': 'string',
-#                     'Name': 'string',
-#                     'CreatedTime': datetime(2015, 1, 1),
-#                     'LastUpdatedTime': datetime(2015, 1, 1),
-#                     'PublishedVersionNumber': 123,
-#                     'LastPublishedTime': datetime(2015, 1, 1)
-#                 },
-#             ],
-#             'NextToken': 'string',
-#             'Status': 123,
-#             'RequestId': 'string'
-#         }
-#
-#         Response Structure
-#
-#             (dict) --
-#
-#                 DashboardSummaryList (list) --
-#
-#                 A structure that contains all of the dashboards in your Amazon Web Services account. This structure provides basic information about the dashboards.
-#
-#                     (dict) --
-#
-#                     Dashboard summary.
-#
-#                         Arn (string) --
-#
-#                         The Amazon Resource Name (ARN) of the resource.
-#
-#                         DashboardId (string) --
-#
-#                         Dashboard ID.
-#
-#                         Name (string) --
-#
-#                         A display name for the dashboard.
-#
-#                         CreatedTime (datetime) --
-#
-#                         The time that this dashboard was created.
-#
-#                         LastUpdatedTime (datetime) --
-#
-#                         The last time that this dashboard was updated.
-#
-#                         PublishedVersionNumber (integer) --
-#
-#                         Published version number.
-#
-#                         LastPublishedTime (datetime) --
-#
-#                         The last time that this dashboard was published.
-#
-#                 NextToken (string) --
-#
-#                 The token for the next set of results, or null if there are no more results.
-#
-#                 Status (integer) --
-#
-#                 The HTTP status of the request.
-#
-#                 RequestId (string) --
-#
-#                 The Amazon Web Services request ID for this operation.
-#
-#     Exceptions
-#
-#         QuickSight.Client.exceptions.ThrottlingException
-#         QuickSight.Client.exceptions.InvalidNextTokenException
-#         QuickSight.Client.exceptions.UnsupportedUserEditionException
-#         QuickSight.Client.exceptions.InternalFailureException
 
-class QuickSightDashboardProvider:
-    def __init__(self):
-        self._client = get_quicksight_client()
+class QuickSightDashboardProvider():
+    def __init__(self, client=None):
+        self._client = client or get_quicksight_client()
 
     def get_dashboard_list(self):
-        dashboards = self._client.list_dashboards(AwsAccountId=settings.AWS_ACCOUNT_ID)
+        response = self._client.list_dashboards(AwsAccountId=settings.AWS_ACCOUNT_ID)
         # Response example:
         # {
         #   "ResponseMetadata": {
-        #     "RequestId": "a1f364ae-26c6-42e4-8a56-fa83299390e8",
+        #     "RequestId": "080b26c0-1297-4451-bdb5-5a5ee5b5eb9e",
         #     "HTTPStatusCode": 200,
         #     "HTTPHeaders": {
-        #       "date": "Thu, 15 Dec 2022 16:53:43 GMT",
+        #       "date": "Thu, 15 Dec 2022 17:29:14 GMT",
         #       "content-type": "application/json",
-        #       "content-length": "95",
+        #       "content-length": "398",
         #       "connection": "keep-alive",
-        #       "x-amzn-requestid": "a1f364ae-26c6-42e4-8a56-fa83299390e8"
+        #       "x-amzn-requestid": "080b26c0-1297-4451-bdb5-5a5ee5b5eb9e"
         #     },
         #     "RetryAttempts": 0
         #   },
         #   "Status": 200,
         #   "DashboardSummaryList": [
         #     {
-        #       "Arn": "arn:aws:quicksight:us-east-1:123456789012:dashboard/12345678-1234-1234-1234-123456789012",
-        #       "DashboardId": "12345678-1234-1234-1234-123456789012",
-        #       "Name": "My Dashboard",
-        #       "CreatedTime": "2021-12-15T16:53:43.000Z",
-        #       "LastUpdatedTime": "2021-12-15T16:53:43.000Z",
+        #       "Arn": "arn:aws:quicksight:us-east-1:847766398334:dashboard/682e87f6-5039-4d80-8a93-9ba105a3c2e9",
+        #       "DashboardId": "682e87f6-5039-4d80-8a93-9ba105a3c2e9",
+        #       "Name": "OfficeCorp Sales",
+        #       "CreatedTime": "2022-12-15T14:28:52.500000-03:00",
+        #       "LastUpdatedTime": "2022-12-15T14:28:52.494000-03:00",
         #       "PublishedVersionNumber": 1,
-        #       "LastPublishedTime": "2021-12-15T16:53:43.000Z"
+        #       "LastPublishedTime": "2022-12-15T14:28:52.500000-03:00"
         #     }
-        #   "RequestId": "a1f364ae-26c6-42e4-8a56-fa83299390e8"
+        #   ],
+        #   "RequestId": "080b26c0-1297-4451-bdb5-5a5ee5b5eb9e"
         # }
-        return dashboards
+        return response['DashboardSummaryList']
 
-    def get_dashboard_url(self, dashboard_id):
-        dashboard_url = self._client.get_dashboard_embed_url(
-            AwsAccountId=settings.AWS_ACCOUNT_ID,
-            DashboardId=dashboard_id,
-            IdentityType="IAM",
-            SessionLifetimeInMinutes=1000,
-            UndoRedoDisabled=True,
-            ResetDisabled=True,
-        )
-        # Response example:
-        # {
-        #   "ResponseMetadata": {
-        #     "RequestId": "a1f364ae-26c6-42e4-8a56-fa83299390e8",
-        #     "HTTPStatusCode": 200,
-        #     "HTTPHeaders": {
-        #       "date": "Thu, 15 Dec 2022 16:53:43 GMT",
-        #       "content-type": "application/json",
-        #       "content-length": "95",
-        #       "connection": "keep-alive",
-        #       "x-amzn-requestid": "a1f364ae-26c6-42e4-8a56-fa83299390e8"
-        #     },
-        #     "RetryAttempts": 0
-        #   },
-        #   "EmbedUrl": "https://quicksight.aws.amazon.com/sn/dashboards/12345678-1234-1234-1234-123456789012?isauthcode=true&identitytype=IAM&sessionlifetime=1000&undo_redo_disabled=true&reset_disabled=true&...",
-        #   "Status": 200,
-        #   "RequestId": "a1f364ae-26c6-42e4-8a56-fa83299390e8"
-        # }
-        return dashboard_url
-
-# list_analyses(**kwargs)
-#
-#     Lists Amazon QuickSight analyses that exist in the specified Amazon Web Services account.
-#
-#     See also: AWS API Documentation
-#
-#     Request Syntax
-#
-#     response = client.list_analyses(
-#         AwsAccountId='string',
-#         NextToken='string',
-#         MaxResults=123
-#     )
-#
-#     Parameters
-#
-#             AwsAccountId (string) --
-#
-#             [REQUIRED]
-#
-#             The ID of the Amazon Web Services account that contains the analyses.
-#             NextToken (string) -- A pagination token that can be used in a subsequent request.
-#             MaxResults (integer) -- The maximum number of results to return.
-#
-#     Return type
-#
-#         dict
-#     Returns
-#
-#         Response Syntax
-#
-#         {
-#             'AnalysisSummaryList': [
-#                 {
-#                     'Arn': 'string',
-#                     'AnalysisId': 'string',
-#                     'Name': 'string',
-#                     'Status': 'CREATION_IN_PROGRESS'|'CREATION_SUCCESSFUL'|'CREATION_FAILED'|'UPDATE_IN_PROGRESS'|'UPDATE_SUCCESSFUL'|'UPDATE_FAILED'|'DELETED',
-#                     'CreatedTime': datetime(2015, 1, 1),
-#                     'LastUpdatedTime': datetime(2015, 1, 1)
-#                 },
-#             ],
-#             'NextToken': 'string',
-#             'Status': 123,
-#             'RequestId': 'string'
-#         }
-#
-#         Response Structure
-#
-#             (dict) --
-#
-#                 AnalysisSummaryList (list) --
-#
-#                 Metadata describing each of the analyses that are listed.
-#
-#                     (dict) --
-#
-#                     The summary metadata that describes an analysis.
-#
-#                         Arn (string) --
-#
-#                         The Amazon Resource Name (ARN) for the analysis.
-#
-#                         AnalysisId (string) --
-#
-#                         The ID of the analysis. This ID displays in the URL.
-#
-#                         Name (string) --
-#
-#                         The name of the analysis. This name is displayed in the Amazon QuickSight console.
-#
-#                         Status (string) --
-#
-#                         The last known status for the analysis.
-#
-#                         CreatedTime (datetime) --
-#
-#                         The time that the analysis was created.
-#
-#                         LastUpdatedTime (datetime) --
-#
-#                         The time that the analysis was last updated.
-#
-#                 NextToken (string) --
-#
-#                 A pagination token that can be used in a subsequent request.
-#
-#                 Status (integer) --
-#
-#                 The HTTP status of the request.
-#
-#                 RequestId (string) --
-#
-#                 The Amazon Web Services request ID for this operation.
-#
-#     Exceptions
-#
-#         QuickSight.Client.exceptions.ThrottlingException
-#         QuickSight.Client.exceptions.InvalidNextTokenException
-#         QuickSight.Client.exceptions.UnsupportedUserEditionException
-#         QuickSight.Client.exceptions.InternalFailureException
 
 class QuickSightAnalysisProvider:
-    def __init__(self):
-        self._client = get_quicksight_client()
+    def __init__(self, client=None):
+        self._client = client or get_quicksight_client()
 
     def get_analysis_list(self):
-        analyses = self._client.list_analyses(AwsAccountId=settings.AWS_ACCOUNT_ID)
+        response = self._client.list_analyses(AwsAccountId=settings.AWS_ACCOUNT_ID)
         # Response example:
         # {
         #   "ResponseMetadata": {
@@ -323,38 +92,85 @@ class QuickSightAnalysisProvider:
         #   ],
         #   "RequestId": "dcf0179f-aecc-4143-a55c-ef51e0864764"
         # }
-        return analyses
+        return response['AnalysisSummaryList']
 
-    def get_analysis_url(self, analysis_id):
-        analysis_url = self._client.get_analysis_embed_url(
+
+# Example of Generating the URL with the authentication code attached for embedding in an iframe
+# From https://docs.aws.amazon.com/quicksight/latest/user/embedded-analytics-dashboards-with-anonymous-users-step-2.html
+
+# import json
+# import boto3
+# from botocore.exceptions import ClientError
+# import time
+
+# # Create QuickSight and STS clients
+# quicksightClient = boto3.client('quicksight',region_name='us-east-1')
+# sts = boto3.client('sts')
+
+# # Function to generate embedded URL for anonymous user
+# # accountId: YOUR AWS ACCOUNT ID
+# # quicksightNamespace: VALID NAMESPACE WHERE YOU WANT TO DO NOAUTH EMBEDDING
+# # authorizedResourceArns: DASHBOARD ARN LIST TO EMBED
+# # allowedDomains: RUNTIME ALLOWED DOMAINS FOR EMBEDDING
+# # experienceConfiguration: DASHBOARD ID TO WHICH THE CONSTRUCTED URL POINTS
+# # sessionTags: SESSION TAGS USED FOR ROW-LEVEL SECURITY
+# def generateEmbedUrlForAnonymousUser(accountId, quicksightNamespace, authorizedResourceArns, allowedDomains, experienceConfiguration, sessionTags):
+#     try:
+#         response = quicksightClient.generate_embed_url_for_anonymous_user(
+#             "AwsAccountId" = accountId,
+#             "Namespace" = quicksightNamespace,
+#             "AuthorizedResourceArns" = authorizedResourceArns,
+#             "AllowedDomains" = allowedDomains,
+#             "ExperienceConfiguration" = experienceConfiguration,
+#             "SessionTags" = sessionTags,
+#             "SessionLifetimeInMinutes" = 600
+#         )
+            
+#         return {
+#             'statusCode': 200,
+#             'headers': {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type"},
+#             'body': json.dumps(response),
+#             'isBase64Encoded':  bool('false')
+#         }
+#     except ClientError as e:
+#         print(e)
+#         return "Error generating embeddedURL: " + str(e)
+
+class QuickSightEmbeddingProvider:
+    def __init__(self, client=None):
+        self._client = client or get_quicksight_client()
+    
+    def get_embedding_url(dashboard_arn, session_tags=None):
+        response = self._client.generate_embed_url_for_anonymous_user(
             AwsAccountId=settings.AWS_ACCOUNT_ID,
-            AnalysisId=analysis_id,
-            IdentityType="IAM",
-            SessionLifetimeInMinutes=1000,
-            UndoRedoDisabled=True,
-            ResetDisabled=True,
+            Namespace=settings.AWS_QUICKSIGHT_NAMESPACE,
+            AuthorizedResourceArns=[dashboard_arn],
+            AllowedDomains=settings.ALLOWED_DOMAINS,
+            ExperienceConfiguration={
+                'DashboardId': dashboard_arn,
+            },
+            SessionTags=session_tags,
+            SessionLifetimeInMinutes=600
         )
         # Response example:
         # {
         #   "ResponseMetadata": {
-        #     "RequestId": "a1f364ae-26c6-42e4-8a56-fa83299390e8",
+        #     "RequestId": "b2d8a7b9-0f6c-4a2b-8b8f-0e5a7c5c5e1e",
         #     "HTTPStatusCode": 200,
         #     "HTTPHeaders": {
         #       "date": "Thu, 15 Dec 2022 17:02:28 GMT",
         #       "content-type": "application/json",
-        #       "content-length": "95",
+        #       "content-length": "2077",
         #       "connection": "keep-alive",
-        #       "x-amzn-requestid": "a1f364ae-26c6-42e4-8a56-fa83299390e8"
+        #       "x-amzn-requestid": "dcf0179f-aecc-4143-a55c-ef51e0864764"
         #     },
         #     "RetryAttempts": 0
         #   },
-        #   "EmbedUrl": "https://quicksight.aws.amazon.com/sn/dashboards/12345678-1234-1234-1234-123456789012?isauthcode=true&identitytype=IAM&sessionlifetime=1000&undo_redo_disabled=true&reset_disabled=true&...",
+        #   "EmbedUrl": "https://quicksight.aws.amazon.com/sn/dashboards/682e87f6-5039-4d80-8a93-9ba105a3c2e9?isauthcode=true&identityprovider=quicksight&code=eyJraWQiOiJkYXNoYm9hcmQtdG9rZW4iLCJhbGciOiJS
         #   "Status": 200,
-        #   "RequestId": "a1f364ae-26c6-42e4-8a56-fa83299390e8"
+        #   "RequestId": "dcf0179f-aecc-4143-a55c-ef51e0864764"
         # }
-        return analysis_url
-
-
-
-
+        return response['EmbedUrl']
+        
+        
 
