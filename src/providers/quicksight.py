@@ -215,42 +215,31 @@ class QuickSightEmbeddingProvider:
                 raise QuickSightExceptions.PricingPlanException(e) from e
             raise QuickSightExceptions.EmbeddingException(e) from e
 
-    def get_dashboard_embedding_url_for_registered_user(self, dashboard_id, user_arn=None, user_name=None, session_tags=None) -> str:
+    def get_dashboard_embedding_url_for_registered_user(self, dashboard_id, user_arn=None, user_name=None) -> str:
         """
         Get the embedding URL for a dashboard
         :param dashboard_id: The ID of the dashboard to embed
         :param user_arn: The ARN of the user to embed
-        :param session_tags: A list of tags to apply to the session
-            Example:
-            session_tags = [
-                {
-                    'Key': 'string',
-                    'Value': 'string'
-                },
-            ]
         :return: The embedding URL
         """
         if not user_arn and not user_name:
             raise QuickSightExceptions.EmbeddingException('You must provide either a user ARN or a user name')
         elif user_arn and user_name:
             user_arn = QuickSightUserProvider(self._client).get_user_by_name(user_name).get('Arn')
-        # dashboard = QuickSightDashboardProvider(self._client).get_dashboard_by_id(dashboard_id)
         # Docs: https://docs.aws.amazon.com/quicksight/latest/APIReference/API_GenerateEmbedUrlForRegisteredUser.html
         params = {
             'AwsAccountId': settings.AWS_ACCOUNT_ID,
             'ExperienceConfiguration': {
                 'Dashboard': {
-                    # 'InitialDashboardId': dashboard.get('DashboardId'),
                     'InitialDashboardId': dashboard_id,
                 }
             },
             'SessionLifetimeInMinutes': 30,
             'UserArn': user_arn
         }
-        if session_tags:
-            params['SessionTags'] = session_tags
         if settings.AWS_QUICKSIGHT_ALLOWED_DOMAINS:
             params['AllowedDomains'] = settings.AWS_QUICKSIGHT_ALLOWED_DOMAINS.split(',')
+            print(f'Allowed domains: {params["AllowedDomains"]}')
         try:
             response = self._client.generate_embed_url_for_registered_user(**params)
             return response.get('EmbedUrl')

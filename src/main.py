@@ -30,6 +30,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# app.include_router(
+#     router,
+#     prefix=BASE_PATH,
+#     tags=["quicksight"],
+# )
 
 @app.get("/")
 async def health_check():
@@ -49,9 +54,10 @@ async def get_analysis_list():
 
 
 @app.get("/quicksight/dashboards/embedding_url_anonymous_user/{dashboard_id}")
-async def get_dashboard_embedding_url(dashboard_id: str):
+async def get_dashboard_embedding_url(dashboard_id: str, session_tags: str = None):
     return QuickSightEmbeddingProvider().get_dashboard_embedding_url_for_anonymous_user(
-        dashboard_id
+        dashboard_id,
+        session_tags.split(",") if session_tags else None,
     )
 
 @app.get("/quicksight/dashboards/embedding_url/{dashboard_id}")
@@ -59,13 +65,11 @@ async def get_dashboard_embedding_url(
     dashboard_id: str,
     user_arn: str = None,
     user_name: str = None,
-    session_tags: str = None,
 ):
     return QuickSightEmbeddingProvider().get_dashboard_embedding_url_for_registered_user(
         dashboard_id,
         user_arn,
         user_name,
-        session_tags.split(",") if session_tags else None,
     )
 
 @app.get("/quicksight/users")
