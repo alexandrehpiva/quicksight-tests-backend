@@ -1,5 +1,13 @@
 .env
 .venv
+.coverage
+coverage.xml
+.tox
+.pytest_cache
+.mypy_cache
+.pytype
+.ipynb_checkpoints
+
 
 __pycache__
 backups
